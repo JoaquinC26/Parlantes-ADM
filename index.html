@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Parlantes Bluetooth — Dashboard CPM</title>
+  <title>Habilitación y certificación de la planta</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
@@ -22,34 +22,28 @@
 const { useState } = React;
 const html = htm.bind(React.createElement);
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 const P_START = new Date(2026,7,18);
 function addWD(date,n){const d=new Date(date);for(let a=0;a<n;){d.setDate(d.getDate()+1);if(d.getDay()&&d.getDay()<6)a++;}return d;}
 const fD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+const fM=v=>v>=1000000?`$${(v/1000000).toFixed(2)}M`:`$${(v/1000).toFixed(0)}K`;
 
-// ── CPM ───────────────────────────────────────────────────────────────────────
+// ── CPM (tareas A–J) ──────────────────────────────────────────────────────────
 const RAW=[
-  {id:1, code:'A',short:'Estudio de mercado',   name:'Estudio de mercado y definición de requisitos',       dur:15,preds:[]},
-  {id:2, code:'B',short:'Diseño industrial',     name:'Diseño industrial y acústico',                        dur:20,preds:[1]},
-  {id:3, code:'C',short:'Diseño electrónico',    name:'Diseño electrónico y de firmware',                    dur:25,preds:[1]},
-  {id:4, code:'D',short:'Adquisición prototipos',name:'Adquisición de componentes para prototipos',          dur:10,preds:[2,3]},
-  {id:5, code:'E',short:'Ensamblaje Alpha',      name:'Ensamblaje del primer lote de prototipos (Alpha)',    dur:10,preds:[4]},
-  {id:6, code:'F',short:'Pruebas',               name:'Pruebas acústicas, térmicas y de durabilidad',        dur:15,preds:[5]},
-  {id:7, code:'G',short:'Certificaciones',       name:'Certificaciones normativas (FCC, CE, Bluetooth SIG)', dur:20,preds:[6]},
-  {id:8, code:'H',short:'Fabricación moldes',    name:'Fabricación de moldes de inyección y matrices',       dur:30,preds:[2,6]},
-  {id:9, code:'I',short:'Compra masiva',         name:'Negociación y compra masiva de componentes',          dur:20,preds:[3,6]},
-  {id:10,code:'J',short:'Montaje línea',         name:'Montaje y calibración de la línea de ensamblaje',     dur:10,preds:[8]},
-  {id:11,code:'K',short:'Prod. piloto',          name:'Producción piloto (lote inicial de prueba)',           dur:10,preds:[9,10]},
-  {id:12,code:'L',short:'Control calidad',       name:'Control de calidad y calibración acústica',           dur:10,preds:[11]},
-  {id:13,code:'M',short:'Prod. en masa',         name:'Producción en masa',                                  dur:20,preds:[7,12]},
-  {id:14,code:'N',short:'Diseño empaque',        name:'Diseño de empaque y manuales de usuario',             dur:15,preds:[2]},
-  {id:15,code:'O',short:'Campaña marketing',     name:'Campaña de marketing y preventa',                     dur:20,preds:[6,14]},
-  {id:16,code:'P',short:'Empaque y logística',   name:'Empaque final y logística de distribución',           dur:10,preds:[13,14]},
-  {id:17,code:'Q',short:'Lanzamiento',           name:'Lanzamiento oficial al mercado y despacho',           dur:5, preds:[15,16]},
+  {id:1, code:'A',short:'Estudio de mercado',    name:'Estudio de mercado y definición de requisitos',       dur:15,preds:[]},
+  {id:2, code:'B',short:'Diseño industrial',      name:'Diseño industrial y acústico',                        dur:20,preds:[1]},
+  {id:3, code:'C',short:'Diseño electrónico',     name:'Diseño electrónico y de firmware',                    dur:25,preds:[1]},
+  {id:4, code:'D',short:'Adquisición prototipos', name:'Adquisición de componentes para prototipos',          dur:10,preds:[2,3]},
+  {id:5, code:'E',short:'Ensamblaje Alpha',       name:'Ensamblaje del primer lote de prototipos (Alpha)',    dur:10,preds:[4]},
+  {id:6, code:'F',short:'Pruebas',                name:'Pruebas acústicas, térmicas y de durabilidad',        dur:15,preds:[5]},
+  {id:7, code:'G',short:'Certificaciones',        name:'Certificaciones normativas (FCC, CE, Bluetooth SIG)', dur:20,preds:[6]},
+  {id:8, code:'H',short:'Fabricación moldes',     name:'Fabricación de moldes de inyección y matrices',       dur:30,preds:[2,6]},
+  {id:9, code:'I',short:'Compra masiva',          name:'Negociación y compra masiva de componentes',          dur:20,preds:[3,6]},
+  {id:10,code:'J',short:'Montaje línea',          name:'Montaje y calibración de la línea de ensamblaje',     dur:10,preds:[8]},
 ];
 const ES={},EF={};
 RAW.forEach(t=>{ES[t.id]=t.preds.length?Math.max(...t.preds.map(p=>EF[p])):0;EF[t.id]=ES[t.id]+t.dur;});
-const PWD=Math.max(...RAW.map(t=>EF[t.id]));
+const PWD=Math.max(...RAW.map(t=>EF[t.id])); // 115
 const LS={},LF={},TF={};
 [...RAW].reverse().forEach(t=>{
   const s=RAW.filter(x=>x.preds.includes(t.id));
@@ -59,53 +53,52 @@ const LS={},LF={},TF={};
 const TASKS=RAW.map(t=>({...t,es:ES[t.id],ef:EF[t.id],ls:LS[t.id],lf:LF[t.id],tf:TF[t.id],
   critical:TF[t.id]===0,sd:addWD(P_START,ES[t.id]),ed:addWD(P_START,EF[t.id])}));
 
-// ── Network positions ─────────────────────────────────────────────────────────
+// ── Posiciones red (A–J, layout más compacto) ─────────────────────────────────
 const NW=118,NH=70;
-const NP={1:{x:50,y:255},2:{x:225,y:135},3:{x:225,y:385},4:{x:410,y:135},5:{x:558,y:135},
-  6:{x:706,y:135},7:{x:858,y:25},8:{x:858,y:135},9:{x:858,y:365},10:{x:1010,y:135},
-  11:{x:1150,y:135},12:{x:1290,y:135},13:{x:1430,y:135},14:{x:410,y:470},
-  15:{x:1010,y:470},16:{x:1578,y:135},17:{x:1726,y:255}};
+const NP={
+  1:{x:50, y:235},   // A – centro izquierda
+  2:{x:240,y:110},   // B – arriba
+  3:{x:240,y:360},   // C – abajo
+  4:{x:440,y:235},   // D – centro (B+C convergen)
+  5:{x:620,y:235},   // E – centro
+  6:{x:800,y:235},   // F – centro
+  7:{x:990,y:60},    // G – arriba derecha (fin no crítico)
+  8:{x:990,y:235},   // H – centro derecha (crítico)
+  9:{x:990,y:410},   // I – abajo derecha (fin no crítico)
+  10:{x:1180,y:235}, // J – extremo derecho (fin crítico)
+};
 
-// ── Resources ─────────────────────────────────────────────────────────────────
-const ROLES=[['GP','Gerente de Proyecto','$9.500'],['DIA','Diseñador Industrial/Acústico','$8.000'],
-  ['IE','Ingeniero Electrónico','$8.500'],['IF','Ingeniero de Firmware','$8.200'],
-  ['RC','Responsable de Compras','$6.500'],['OP','Operario de Producción','$3.800'],
-  ['IC','Ingeniero de Calidad','$7.000'],['RM','Responsable de Marketing','$6.800'],
-  ['CL','Coordinador de Logística','$6.000'],['ICE','Ingeniero de Certificaciones','$8.000']];
-const EMPLOYEES=[['EGP','Empleado - Gestión','Gerente de Proyecto','$9.500'],
-  ['EDIA','Empleado - Diseño','Diseñador Industrial/Acústico','$8.000'],
-  ['EIE','Empleado - Electrónica','Ingeniero Electrónico','$8.500'],
-  ['EIF','Empleado - Firmware','Ingeniero de Firmware','$8.200'],
-  ['ERC','Empleado - Compras','Responsable de Compras','$6.500'],
-  ['EOP','Empleado - Producción','Operario de Producción','$3.800'],
-  ['EIC','Empleado - Calidad','Ingeniero de Calidad','$7.000'],
-  ['ERM','Empleado - Marketing','Responsable de Marketing','$6.800'],
-  ['ECL','Empleado - Logística','Coordinador de Logística','$6.000'],
-  ['EICE','Empleado - Certificaciones','Ingeniero de Certificaciones','$8.000']];
-const MACH_T=[['EE','Equipos de ensamblaje','$4.500/hr'],['EPA','Equipos de prueba acústica','$6.000/hr'],
-  ['MIP','Máquinas de inyección de plástico','$8.500/hr'],['EC','Equipos de calibración','$5.200/hr'],
-  ['EPE','Equipos de prueba electrónica','$5.800/hr']];
-const MACHINERY=[['LE','Línea de ensamblaje','Equipos de ensamblaje','$4.500/hr'],
-  ['CA','Cámara acústica','Equipos de prueba acústica','$6.000/hr'],
-  ['IM','Inyectora de moldes','Máquinas de inyección de plástico','$8.500/hr'],
-  ['SC','Sistema de calibración','Equipos de calibración','$5.200/hr'],
-  ['BPE','Banco de prueba electrónica','Equipos de prueba electrónica','$5.800/hr']];
-const MATERIALS=[['MB','Módulo Bluetooth','$8.500/u'],['BL','Batería LiPo','$7.200/u'],
-  ['PCB','PCB (Placa de circuito impreso)','$13.500/u'],['DA','Driver de altavoz','$9.800/u'],
-  ['CP','Carcasa de plástico','$5.500/u'],['ME','Material de empaque','$2.800/u'],
-  ['CC','Cables y conectores','$1.600/u'],['MAA','Material de amortiguación acústica','$3.200/u']];
+// ── Empleados ─────────────────────────────────────────────────────────────────
+const EMPLOYEES=[
+  ['EGP', 'Empleado - Gestión',          'Gerente de Proyecto',            '$9.500'],
+  ['EDIA','Empleado - Diseño',           'Diseñador Industrial/Acústico',  '$8.000'],
+  ['EIE', 'Empleado - Electrónica',      'Ingeniero Electrónico',          '$8.500'],
+  ['EIF', 'Empleado - Firmware',         'Ingeniero de Firmware',          '$8.200'],
+  ['ERC', 'Empleado - Compras',          'Responsable de Compras',         '$6.500'],
+  ['EOP', 'Empleado - Producción',       'Operario de Producción',         '$3.800'],
+  ['EIC', 'Empleado - Calidad',          'Ingeniero de Calidad',           '$7.000'],
+  ['ERM', 'Empleado - Marketing',        'Responsable de Marketing',       '$6.800'],
+  ['EICE','Empleado - Certificaciones',  'Ingeniero de Certificaciones',   '$8.000'],
+];
+
+// ── Asignación por tarea ──────────────────────────────────────────────────────
 const ASSIGN=[
-  {code:'A',emp:['EGP','ERM'],mach:[],mat:[]},{code:'B',emp:['EDIA'],mach:[],mat:[]},
-  {code:'C',emp:['EIE','EIF'],mach:[],mat:[]},{code:'D',emp:['ERC'],mach:[],mat:['MB','BL','PCB','DA','CP']},
-  {code:'E',emp:['EOP'],mach:['LE'],mat:['CC','MAA']},{code:'F',emp:['EIC'],mach:['CA','BPE'],mat:[]},
-  {code:'G',emp:['EICE'],mach:[],mat:[]},{code:'H',emp:['EOP'],mach:['IM'],mat:[]},
-  {code:'I',emp:['ERC'],mach:[],mat:['MB','BL','PCB','DA','CP','CC']},
-  {code:'J',emp:['EOP'],mach:['LE','SC'],mat:[]},{code:'K',emp:['EOP'],mach:['LE'],mat:['MB','BL','PCB','DA','CP']},
-  {code:'L',emp:['EIC'],mach:['CA','SC'],mat:[]},{code:'M',emp:['EOP'],mach:['LE'],mat:['MB','BL','PCB','DA','CP','CC','MAA']},
-  {code:'N',emp:['EDIA','ERM'],mach:[],mat:['ME']},{code:'O',emp:['ERM'],mach:[],mat:[]},
-  {code:'P',emp:['ECL','EOP'],mach:[],mat:['ME']},{code:'Q',emp:['EGP','ECL'],mach:[],mat:[]}];
+  {code:'A',emp:['EGP','ERM']},
+  {code:'B',emp:['EDIA']},
+  {code:'C',emp:['EIE','EIF']},
+  {code:'D',emp:['ERC']},
+  {code:'E',emp:['EOP']},
+  {code:'F',emp:['EIC']},
+  {code:'G',emp:['EICE']},
+  {code:'H',emp:['EOP']},
+  {code:'I',emp:['ERC']},
+  {code:'J',emp:['EOP']},
+];
 
-// ── Tabla ─────────────────────────────────────────────────────────────────────
+// ── Tarifas (ARS/hr) ──────────────────────────────────────────────────────────
+const EMP_RATE={EGP:9500,EDIA:8000,EIE:8500,EIF:8200,ERC:6500,EOP:3800,EIC:7000,ERM:6800,EICE:8000};
+
+// ── Tabla genérica ────────────────────────────────────────────────────────────
 function Tbl({heads,rows}){
   return html`<table style=${{width:'100%',borderCollapse:'collapse',fontSize:13}}>
     <thead><tr>${heads.map((h,i)=>html`<th key=${i} style=${{background:'#1e293b',color:'#e2e8f0',
@@ -117,9 +110,80 @@ function Tbl({heads,rows}){
   </table>`;
 }
 
+// ── Histograma de pagos ───────────────────────────────────────────────────────
+function PaymentChart(){
+  const data=[...TASKS].sort((a,b)=>a.es-b.es).map(t=>{
+    const a=ASSIGN.find(x=>x.code===t.code);
+    const rate=a.emp.reduce((s,e)=>s+(EMP_RATE[e]||0),0);
+    return {...t,cost:rate*t.dur*8,rate};
+  });
+  const maxCost=Math.max(...data.map(d=>d.cost));
+  const total=data.reduce((s,d)=>s+d.cost,0);
+  const maxY=Math.ceil(maxCost/500000)*500000;
+  const ticks=[];
+  for(let v=0;v<=maxY;v+=500000)ticks.push(v);
+  const BW=52,GAP=8,CH=200,ML=82,MT=22,MB=58,MR=55;
+  const W=data.length*(BW+GAP)+ML+MR, H=CH+MT+MB;
+  let cumul=0;
+  const cPts=data.map((d,i)=>{cumul+=d.cost;
+    return{x:ML+i*(BW+GAP)+BW/2,y:MT+CH-(cumul/total)*CH,pct:Math.round(cumul/total*100)};});
+  const cPath=cPts.map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ');
+
+  return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14,marginTop:12}}>
+    <div style=${{display:'flex',alignItems:'baseline',gap:12,marginBottom:10,flexWrap:'wrap'}}>
+      <span style=${{fontSize:14,fontWeight:700,color:'#1e293b'}}>💰 Plan de pagos — Empleados</span>
+      <span style=${{fontSize:12,color:'#6b7280'}}>Pago distribuido durante la tarea · 8 hr/día hábil · ordenado por inicio</span>
+      <span style=${{fontSize:13,fontWeight:700,color:'#1d4ed8',marginLeft:'auto'}}>Total: ${fM(total)} ARS</span>
+    </div>
+    <div style=${{overflowX:'auto',border:'1px solid #e5e7eb',borderRadius:6}}>
+      <svg width=${W} height=${H} style=${{display:'block',background:'#f8fafc'}}>
+        ${ticks.map((v,i)=>{const y=MT+CH-(v/maxY)*CH;return html`<g key=${i}>
+          <line x1=${ML} y1=${y} x2=${W-MR} y2=${y} stroke=${v===0?'#d1d5db':'#e5e7eb'} strokeWidth="1" strokeDasharray=${v===0?'none':'3,3'}/>
+          <text x=${ML-5} y=${y+3.5} fontSize="9" fill="#94a3b8" textAnchor="end">${fM(v)}</text>
+        </g>`;})}
+        ${[0,25,50,75,100].map((p,i)=>{const y=MT+CH-(p/100)*CH;return html`<g key=${i}>
+          <text x=${W-MR+6} y=${y+3.5} fontSize="9" fill="#f59e0b" textAnchor="start">${p}%</text>
+        </g>`;})}
+        ${data.map((d,i)=>{
+          const x=ML+i*(BW+GAP),bh=Math.max((d.cost/maxY)*CH,2),y=MT+CH-bh;
+          return html`<g key=${d.code}>
+            <title>${d.code}: ${fM(d.cost)} — ${ASSIGN.find(a=>a.code===d.code).emp.join(', ')} — ${d.dur}d</title>
+            <rect x=${x} y=${y} width=${BW} height=${bh} rx="3" fill=${d.critical?'#ef4444':'#3b82f6'} fillOpacity="0.85"/>
+            <text x=${x+BW/2} y=${y-5} fontSize="8.5" fill="#374151" textAnchor="middle" fontWeight="500">${fM(d.cost)}</text>
+            <text x=${x+BW/2} y=${MT+CH+16} fontSize="12" fontWeight="bold" fill=${d.critical?'#b91c1c':'#1d4ed8'} textAnchor="middle">${d.code}</text>
+            <text x=${x+BW/2} y=${MT+CH+30} fontSize="8" fill="#94a3b8" textAnchor="middle">${d.dur}d</text>
+            <text x=${x+BW/2} y=${MT+CH+43} fontSize="8" fill="#64748b" textAnchor="middle">${ASSIGN.find(a=>a.code===d.code).emp.join('+')}</text>
+          </g>`;
+        })}
+        <path d=${cPath} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
+        ${cPts.map((p,i)=>html`<g key=${i}>
+          <circle cx=${p.x} cy=${p.y} r="3.5" fill="#f59e0b"/>
+          ${i===cPts.length-1&&html`<text x=${p.x+6} y=${p.y+4} fontSize="9" fill="#b45309" fontWeight="bold">100%</text>`}
+        </g>`)}
+        <line x1=${ML} y1=${MT} x2=${ML} y2=${MT+CH} stroke="#d1d5db" strokeWidth="1"/>
+        <line x1=${ML} y1=${MT+CH} x2=${W-MR} y2=${MT+CH} stroke="#d1d5db" strokeWidth="1"/>
+        <line x1=${W-MR} y1=${MT} x2=${W-MR} y2=${MT+CH} stroke="#fcd34d" strokeWidth="1" strokeDasharray="3,3"/>
+        <text x="12" y=${MT+CH/2} fontSize="10" fill="#6b7280" textAnchor="middle" transform=${`rotate(-90,12,${MT+CH/2})`}>Costo ARS</text>
+        <text x=${W-MR+28} y=${MT+CH/2} fontSize="10" fill="#f59e0b" textAnchor="middle" transform=${`rotate(90,${W-MR+28},${MT+CH/2})`}>Acumulado %</text>
+      </svg>
+    </div>
+    <div style=${{display:'flex',gap:18,marginTop:8,fontSize:11,flexWrap:'wrap',alignItems:'center'}}>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}>
+        <span style=${{width:14,height:10,background:'#ef4444',borderRadius:2,display:'inline-block',opacity:.85}}></span>Tarea crítica
+      </span>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}>
+        <span style=${{width:14,height:10,background:'#3b82f6',borderRadius:2,display:'inline-block',opacity:.85}}></span>No crítica
+      </span>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}>
+        <span style=${{display:'inline-block',width:24,height:2.5,background:'#f59e0b',borderRadius:1}}></span>Egreso acumulado (eje derecho)
+      </span>
+    </div>
+  </div>`;
+}
+
 // ── Gantt ─────────────────────────────────────────────────────────────────────
 function Gantt(){
-  const [zoom,setZoom]=useState(6);
+  const [zoom,setZoom]=useState(8);
   const [showDeps,setShowDeps]=useState(true);
   const [sel,setSel]=useState(null);
   const DW=zoom,RH=32,LW=250,HH=60;
@@ -129,89 +193,90 @@ function Gantt(){
   const toggle=t=>setSel(prev=>prev?.id===t.id?null:t);
   const legend=[['#ef4444','','Crítica (HT=0)'],['#3b82f6','','No crítica'],['#bfdbfe','1px dashed #93c5fd','Holgura']];
 
-  return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
-    <div style=${{display:'flex',alignItems:'center',gap:12,marginBottom:10,flexWrap:'wrap'}}>
-      <div style=${{display:'flex',alignItems:'center',gap:6}}>
-        <button onClick=${()=>setZoom(z=>Math.max(2,z-1))}
-          style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>−</button>
-        <span style=${{fontSize:13,color:'#6b7280',padding:'0 8px',minWidth:60,textAlign:'center'}}>Zoom ${zoom}×</span>
-        <button onClick=${()=>setZoom(z=>Math.min(20,z+1))}
-          style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>+</button>
-      </div>
-      <label style=${{display:'flex',alignItems:'center',gap:5,fontSize:13,cursor:'pointer',color:'#374151'}}>
-        <input type="checkbox" checked=${showDeps} onChange=${e=>setShowDeps(e.target.checked)}/> Dependencias
-      </label>
-      <div style=${{display:'flex',gap:14,fontSize:12,marginLeft:'auto',flexWrap:'wrap'}}>
-        ${legend.map(([bg,bdr,l])=>html`<span key=${l} style=${{display:'flex',alignItems:'center',gap:5}}>
-          <span style=${{width:15,height:11,background:bg,borderRadius:2,display:'inline-block',border:bdr||'none'}}></span>${l}
-        </span>`)}
-      </div>
-    </div>
-    ${sel&&html`<div style=${{background:'#f0f9ff',border:'1px solid #bae6fd',borderRadius:8,padding:'10px 14px',
-      marginBottom:10,fontSize:12,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
-      <div>
-        <div style=${{fontWeight:700,color:sel.critical?'#dc2626':'#1d4ed8',marginBottom:5,fontSize:13}}>
-          ${sel.code} — ${sel.name}</div>
-        <div style=${{display:'flex',gap:14,flexWrap:'wrap',color:'#374151'}}>
-          <span>⏱ ${sel.dur} días (${sel.dur/5} sem)</span>
-          <span>▶ ES: día ${sel.es} · ${fD(sel.sd)}</span>
-          <span>■ EF: día ${sel.ef} · ${fD(sel.ed)}</span>
-          <span>↦ LS: ${sel.ls} · LF: ${sel.lf}</span>
-          <span style=${{color:sel.critical?'#dc2626':'#1d4ed8',fontWeight:700}}>HT: ${sel.tf} días${sel.critical?' ★ CRÍTICA':''}</span>
+  return html`<div>
+    <div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
+      <div style=${{display:'flex',alignItems:'center',gap:12,marginBottom:10,flexWrap:'wrap'}}>
+        <div style=${{display:'flex',alignItems:'center',gap:6}}>
+          <button onClick=${()=>setZoom(z=>Math.max(2,z-1))}
+            style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>−</button>
+          <span style=${{fontSize:13,color:'#6b7280',padding:'0 8px',minWidth:60,textAlign:'center'}}>Zoom ${zoom}×</span>
+          <button onClick=${()=>setZoom(z=>Math.min(20,z+1))}
+            style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>+</button>
+        </div>
+        <label style=${{display:'flex',alignItems:'center',gap:5,fontSize:13,cursor:'pointer',color:'#374151'}}>
+          <input type="checkbox" checked=${showDeps} onChange=${e=>setShowDeps(e.target.checked)}/> Dependencias
+        </label>
+        <div style=${{display:'flex',gap:14,fontSize:12,marginLeft:'auto',flexWrap:'wrap'}}>
+          ${legend.map(([bg,bdr,l])=>html`<span key=${l} style=${{display:'flex',alignItems:'center',gap:5}}>
+            <span style=${{width:15,height:11,background:bg,borderRadius:2,display:'inline-block',border:bdr||'none'}}></span>${l}
+          </span>`)}
         </div>
       </div>
-      <button onClick=${()=>setSel(null)} style=${{border:'none',background:'none',cursor:'pointer',fontSize:22,color:'#94a3b8',lineHeight:1}}>×</button>
-    </div>`}
-    <div style=${{overflowX:'auto',overflowY:'auto',maxHeight:540,border:'1px solid #e5e7eb',borderRadius:6}}>
-      <svg width=${TW} height=${TH}>
-        <defs>
-          <marker id="ga" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"></path></marker>
-          <marker id="gac" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ef4444"></path></marker>
-        </defs>
-        ${TASKS.map((_,i)=>html`<rect key=${i} x="0" y=${HH+i*RH} width=${TW} height=${RH} fill=${i%2===0?'#f9fafb':'white'}/>`)}
-        ${marks.map(({d,date})=>{const x=LW+d*DW;return html`<g key=${d}>
-          <line x1=${x} y1=${HH} x2=${x} y2=${TH} stroke=${d%20===0?'#d1d5db':'#f1f5f9'} strokeWidth="1"/>
-          ${d%20===0&&html`<text x=${x+3} y="52" fontSize="9" fill="#94a3b8">${fD(date)}</text>`}
-        </g>`;})}
-        ${showDeps&&TASKS.flatMap(t=>t.preds.map(pid=>{
-          const pr=TASKS.find(x=>x.id===pid);
-          const x1=LW+pr.ef*DW,y1=HH+(pr.id-1)*RH+RH/2,x2=LW+t.es*DW,y2=HH+(t.id-1)*RH+RH/2;
-          const crit=pr.critical&&t.critical;
-          return html`<line key=${`${pid}-${t.id}`} x1=${x1} y1=${y1} x2=${x2} y2=${y2}
-            stroke=${crit?'#ef4444':'#cbd5e1'} strokeWidth=${crit?1.5:1} markerEnd=${crit?'url(#gac)':'url(#ga)'}/>`;
-        }))}
-        ${TASKS.map((t,i)=>{
-          const y=HH+i*RH,bx=LW+t.es*DW,bw=t.dur*DW,tx=bx+bw,tw=t.tf*DW,isSel=sel?.id===t.id;
-          return html`<g key=${t.id} style=${{cursor:'pointer'}} onClick=${()=>toggle(t)}>
-            ${isSel&&html`<rect x="0" y=${y} width=${TW} height=${RH} fill="#e0f2fe" fillOpacity="0.5"/>`}
-            <text x="4" y=${y+RH/2+4} fontSize="11" fontWeight="bold" fill=${t.critical?'#b91c1c':'#1d4ed8'}>${t.code}</text>
-            <text x="25" y=${y+RH/2+4} fontSize="10.5" fill="#374151">${t.short}</text>
-            ${t.tf>0&&tw>2&&html`<rect x=${tx} y=${y+7} width=${tw} height=${RH-14} rx="2"
-              fill="#bfdbfe" fillOpacity="0.65" stroke="#93c5fd" strokeWidth="1" strokeDasharray="4,2"/>`}
-            <rect x=${bx} y=${y+7} width=${bw} height=${RH-14} rx="2"
-              fill=${t.critical?'#ef4444':'#3b82f6'} stroke=${isSel?'#0284c7':'none'} strokeWidth=${isSel?2:0}/>
-            ${bw>16&&html`<text x=${bx+bw/2} y=${y+RH/2+4} fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">${t.code}</text>`}
-            ${t.tf>0&&tw>34&&html`<text x=${tx+tw/2} y=${y+RH/2+4} fontSize="9" fill="#1d4ed8" textAnchor="middle">HT=${t.tf}d</text>`}
-          </g>`;
-        })}
-        <rect x="0" y="0" width=${TW} height=${HH} fill="#0f172a"/>
-        <text x="8" y="26" fontSize="13" fontWeight="bold" fill="white">Tarea</text>
-        <text x=${LW+12} y="26" fontSize="12" fontWeight="bold" fill="white">Cronograma — días hábiles (lun–vie) · clic en barra para detalles</text>
-        <text x="8" y="46" fontSize="9.5" fill="#94a3b8">${fD(P_START)} → ${fD(addWD(P_START,PWD))} · ${PWD} días · 34 semanas</text>
-        <line x1=${LW} y1="0" x2=${LW} y2=${TH} stroke="#334155" strokeWidth="1"/>
-      </svg>
+      ${sel&&html`<div style=${{background:'#f0f9ff',border:'1px solid #bae6fd',borderRadius:8,padding:'10px 14px',
+        marginBottom:10,fontSize:12,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+        <div>
+          <div style=${{fontWeight:700,color:sel.critical?'#dc2626':'#1d4ed8',marginBottom:5,fontSize:13}}>${sel.code} — ${sel.name}</div>
+          <div style=${{display:'flex',gap:14,flexWrap:'wrap',color:'#374151'}}>
+            <span>⏱ ${sel.dur} días (${sel.dur/5} sem)</span>
+            <span>▶ ES: día ${sel.es} · ${fD(sel.sd)}</span>
+            <span>■ EF: día ${sel.ef} · ${fD(sel.ed)}</span>
+            <span>↦ LS: ${sel.ls} · LF: ${sel.lf}</span>
+            <span style=${{color:sel.critical?'#dc2626':'#1d4ed8',fontWeight:700}}>HT: ${sel.tf} días${sel.critical?' ★ CRÍTICA':''}</span>
+          </div>
+        </div>
+        <button onClick=${()=>setSel(null)} style=${{border:'none',background:'none',cursor:'pointer',fontSize:22,color:'#94a3b8',lineHeight:1}}>×</button>
+      </div>`}
+      <div style=${{overflowX:'auto',overflowY:'auto',maxHeight:380,border:'1px solid #e5e7eb',borderRadius:6}}>
+        <svg width=${TW} height=${TH}>
+          <defs>
+            <marker id="ga" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"></path></marker>
+            <marker id="gac" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#ef4444"></path></marker>
+          </defs>
+          ${TASKS.map((_,i)=>html`<rect key=${i} x="0" y=${HH+i*RH} width=${TW} height=${RH} fill=${i%2===0?'#f9fafb':'white'}/>`)}
+          ${marks.map(({d,date})=>{const x=LW+d*DW;return html`<g key=${d}>
+            <line x1=${x} y1=${HH} x2=${x} y2=${TH} stroke=${d%20===0?'#d1d5db':'#f1f5f9'} strokeWidth="1"/>
+            ${d%20===0&&html`<text x=${x+3} y="52" fontSize="9" fill="#94a3b8">${fD(date)}</text>`}
+          </g>`;})}
+          ${showDeps&&TASKS.flatMap(t=>t.preds.map(pid=>{
+            const pr=TASKS.find(x=>x.id===pid);
+            const x1=LW+pr.ef*DW,y1=HH+(pr.id-1)*RH+RH/2,x2=LW+t.es*DW,y2=HH+(t.id-1)*RH+RH/2;
+            const crit=pr.critical&&t.critical;
+            return html`<line key=${`${pid}-${t.id}`} x1=${x1} y1=${y1} x2=${x2} y2=${y2}
+              stroke=${crit?'#ef4444':'#cbd5e1'} strokeWidth=${crit?1.5:1} markerEnd=${crit?'url(#gac)':'url(#ga)'}/>`;
+          }))}
+          ${TASKS.map((t,i)=>{
+            const y=HH+i*RH,bx=LW+t.es*DW,bw=t.dur*DW,tx=bx+bw,tw=t.tf*DW,isSel=sel?.id===t.id;
+            return html`<g key=${t.id} style=${{cursor:'pointer'}} onClick=${()=>toggle(t)}>
+              ${isSel&&html`<rect x="0" y=${y} width=${TW} height=${RH} fill="#e0f2fe" fillOpacity="0.5"/>`}
+              <text x="4" y=${y+RH/2+4} fontSize="11" fontWeight="bold" fill=${t.critical?'#b91c1c':'#1d4ed8'}>${t.code}</text>
+              <text x="25" y=${y+RH/2+4} fontSize="10.5" fill="#374151">${t.short}</text>
+              ${t.tf>0&&tw>2&&html`<rect x=${tx} y=${y+7} width=${tw} height=${RH-14} rx="2"
+                fill="#bfdbfe" fillOpacity="0.65" stroke="#93c5fd" strokeWidth="1" strokeDasharray="4,2"/>`}
+              <rect x=${bx} y=${y+7} width=${bw} height=${RH-14} rx="2"
+                fill=${t.critical?'#ef4444':'#3b82f6'} stroke=${isSel?'#0284c7':'none'} strokeWidth=${isSel?2:0}/>
+              ${bw>16&&html`<text x=${bx+bw/2} y=${y+RH/2+4} fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">${t.code}</text>`}
+              ${t.tf>0&&tw>34&&html`<text x=${tx+tw/2} y=${y+RH/2+4} fontSize="9" fill="#1d4ed8" textAnchor="middle">HT=${t.tf}d</text>`}
+            </g>`;
+          })}
+          <rect x="0" y="0" width=${TW} height=${HH} fill="#0f172a"/>
+          <text x="8" y="26" fontSize="13" fontWeight="bold" fill="white">Tarea</text>
+          <text x=${LW+12} y="26" fontSize="12" fontWeight="bold" fill="white">Cronograma — días hábiles (lun–vie) · clic en barra para detalles</text>
+          <text x="8" y="46" fontSize="9.5" fill="#94a3b8">${fD(P_START)} → ${fD(addWD(P_START,PWD))} · ${PWD} días hábiles · 23 semanas</text>
+          <line x1=${LW} y1="0" x2=${LW} y2=${TH} stroke="#334155" strokeWidth="1"/>
+        </svg>
+      </div>
     </div>
+    <${PaymentChart}/>
   </div>`;
 }
 
 // ── Red CPM ───────────────────────────────────────────────────────────────────
 function Network(){
-  const SVG_W=1880,SVG_H=575;
+  const SVG_W=1350,SVG_H=520;
   const arrows=TASKS.flatMap(t=>t.preds.map(pid=>{
     const s=NP[pid],d=NP[t.id],x1=s.x+NW,y1=s.y+NH/2,x2=d.x,y2=d.y+NH/2,cx=(x1+x2)/2;
     const isCrit=TASKS.find(x=>x.id===pid)?.critical&&t.critical;
-    const path=(pid===2&&t.id===8)?`M ${x1} ${y1} C ${x1} ${y1+85} ${x2} ${y2+85} ${x2} ${y2}`
-      :`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`;
+    const path=`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`;
     return {key:`${pid}-${t.id}`,path,isCrit};
   }));
   return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
@@ -224,7 +289,7 @@ function Network(){
       </span>
       <span style=${{color:'#6b7280',fontSize:11}}>Nodo: ES | Cód | EF / HT / LS | LF (días hábiles)</span>
     </div>
-    <div style=${{overflowX:'auto',overflowY:'auto',maxHeight:530,border:'1px solid #e5e7eb',borderRadius:6}}>
+    <div style=${{overflowX:'auto',border:'1px solid #e5e7eb',borderRadius:6}}>
       <svg width=${SVG_W} height=${SVG_H} style=${{display:'block',background:'#f8fafc'}}>
         <defs>
           <marker id="na" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="#9ca3af"></polygon></marker>
@@ -256,37 +321,9 @@ function Network(){
 
 // ── Recursos ──────────────────────────────────────────────────────────────────
 function Resources(){
-  const [sub,setSub]=useState('roles');
-  const tabs=[['roles','Roles'],['emp','Empleados'],['mt','Tipos maq.'],['mach','Maquinaria'],['mat','Materiales'],['asign','Asignación']];
-  const btn=k=>({padding:'6px 16px',fontSize:13,border:'1px solid',borderRadius:6,cursor:'pointer',
-    borderColor:sub===k?'#2563eb':'#d1d5db',background:sub===k?'#2563eb':'white',
-    color:sub===k?'white':'#374151',fontWeight:sub===k?600:400});
   return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
-    <div style=${{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
-      ${tabs.map(([k,l])=>html`<button key=${k} style=${btn(k)} onClick=${()=>setSub(k)}>${l}</button>`)}
-    </div>
-    ${sub==='roles'&&html`<${Tbl} heads=${['Código','Rol','Costo/hr (ARS)']} rows=${ROLES}/>`}
-    ${sub==='emp'&&html`<${Tbl} heads=${['Código','Empleado','Rol asignado','Costo/hr (ARS)']} rows=${EMPLOYEES}/>`}
-    ${sub==='mt'&&html`<${Tbl} heads=${['Código','Tipo de maquinaria','Costo/hr (ARS)']} rows=${MACH_T}/>`}
-    ${sub==='mach'&&html`<${Tbl} heads=${['Código','Maquinaria','Tipo','Costo/hr (ARS)']} rows=${MACHINERY}/>`}
-    ${sub==='mat'&&html`<${Tbl} heads=${['Código','Material','Costo unitario (ARS)']} rows=${MATERIALS}/>`}
-    ${sub==='asign'&&html`<div>
-      <table style=${{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-        <thead><tr>${['Cód','Tarea','Empleados','Maquinaria','Materiales'].map((h,i)=>html`<th key=${i} style=${{
-          background:'#1e293b',color:'#e2e8f0',padding:'9px 12px',textAlign:'left',fontWeight:500,fontSize:12}}>${h}</th>`)}</tr></thead>
-        <tbody>${ASSIGN.map((a,i)=>{
-          const t=TASKS.find(x=>x.code===a.code);
-          return html`<tr key=${a.code} style=${{background:t?.critical?'#fff1f2':i%2===0?'#f8fafc':'white'}}>
-            <td style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',fontWeight:700,color:t?.critical?'#dc2626':'#2563eb',fontFamily:'monospace'}}>${a.code}</td>
-            <td style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',color:'#374151'}}>${t?.short}</td>
-            <td style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',color:'#374151'}}>${a.emp.join(', ')||'—'}</td>
-            <td style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',color:'#374151'}}>${a.mach.join(', ')||'—'}</td>
-            <td style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',color:'#374151'}}>${a.mat.join(', ')||'—'}</td>
-          </tr>`;
-        })}</tbody>
-      </table>
-      <p style=${{fontSize:12,color:'#6b7280',marginTop:8}}>Filas en rojo = tarea en el camino crítico.</p>
-    </div>`}
+    <div style=${{marginBottom:12,fontSize:14,fontWeight:700,color:'#1e293b'}}>👤 Empleados del proyecto</div>
+    <${Tbl} heads=${['Código','Empleado','Rol asignado','Costo/hr (ARS)']} rows=${EMPLOYEES}/>
   </div>`;
 }
 
@@ -299,15 +336,16 @@ function App(){
     borderBottom:tab===k?'3px solid #2563eb':'3px solid transparent',marginBottom:'-2px'});
   return html`<div style=${{minHeight:'100vh',background:'#f1f5f9'}}>
     <div style=${{background:'#0f172a',color:'white',padding:'14px 18px'}}>
-      <h1 style=${{margin:0,fontSize:16,fontWeight:600}}>🔊 Parlantes Bluetooth Portátiles — Plan de Fabricación y Lanzamiento</h1>
+      <h1 style=${{margin:0,fontSize:16,fontWeight:600}}>🏭 Habilitación y certificación de la planta — Parlantes Bluetooth Portátiles</h1>
       <div style=${{display:'flex',gap:18,marginTop:7,fontSize:12,color:'#94a3b8',flexWrap:'wrap'}}>
-        <span>📅 Inicio: ${fD(P_START)}</span><span>🏁 Fin: ${fD(pEnd)}</span>
-        <span>⏱ ${PWD} días hábiles · 34 semanas</span>
-        <span style=${{color:'#fca5a5',fontWeight:600}}>🔴 Ruta crítica: A→C→D→E→F→H→J→K→L→M→P→Q</span>
+        <span>📅 Inicio: ${fD(P_START)}</span>
+        <span>🏁 Fin: ${fD(pEnd)}</span>
+        <span>⏱ ${PWD} días hábiles · 23 semanas</span>
+        <span style=${{color:'#fca5a5',fontWeight:600}}>🔴 Ruta crítica: A→C→D→E→F→H→J</span>
       </div>
     </div>
     <div style=${{display:'flex',background:'white',borderBottom:'2px solid #e2e8f0',padding:'0 14px'}}>
-      <button style=${tBtn('gantt')} onClick=${()=>setTab('gantt')}>📊 Diagrama Gantt</button>
+      <button style=${tBtn('gantt')} onClick=${()=>setTab('gantt')}>📊 Gantt + Pagos</button>
       <button style=${tBtn('red')} onClick=${()=>setTab('red')}>🔗 Red CPM</button>
       <button style=${tBtn('rec')} onClick=${()=>setTab('rec')}>👥 Recursos</button>
     </div>
