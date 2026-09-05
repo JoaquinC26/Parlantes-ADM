@@ -21,29 +21,27 @@
 <script>
 const { useState } = React;
 const html = htm.bind(React.createElement);
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
 const P_START = new Date(2026,7,18);
 function addWD(date,n){const d=new Date(date);for(let a=0;a<n;){d.setDate(d.getDate()+1);if(d.getDay()&&d.getDay()<6)a++;}return d;}
 const fD=d=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
 const fM=v=>v>=1000000?`$${(v/1000000).toFixed(2)}M`:`$${(v/1000).toFixed(0)}K`;
-
-// ── CPM (tareas A–J) ──────────────────────────────────────────────────────────
 const RAW=[
-  {id:1, code:'A',short:'Estudio de mercado',    name:'Estudio de mercado y definición de requisitos',       dur:15,preds:[]},
-  {id:2, code:'B',short:'Diseño industrial',      name:'Diseño industrial y acústico',                        dur:20,preds:[1]},
-  {id:3, code:'C',short:'Diseño electrónico',     name:'Diseño electrónico y de firmware',                    dur:25,preds:[1]},
-  {id:4, code:'D',short:'Adquisición prototipos', name:'Adquisición de componentes para prototipos',          dur:10,preds:[2,3]},
-  {id:5, code:'E',short:'Ensamblaje Alpha',       name:'Ensamblaje del primer lote de prototipos (Alpha)',    dur:10,preds:[4]},
-  {id:6, code:'F',short:'Pruebas',                name:'Pruebas acústicas, térmicas y de durabilidad',        dur:15,preds:[5]},
-  {id:7, code:'G',short:'Certificaciones',        name:'Certificaciones normativas (FCC, CE, Bluetooth SIG)', dur:20,preds:[6]},
-  {id:8, code:'H',short:'Fabricación moldes',     name:'Fabricación de moldes de inyección y matrices',       dur:30,preds:[2,6]},
-  {id:9, code:'I',short:'Compra masiva',          name:'Negociación y compra masiva de componentes',          dur:20,preds:[3,6]},
-  {id:10,code:'J',short:'Montaje línea',          name:'Montaje y calibración de la línea de ensamblaje',     dur:10,preds:[8]},
+  {id:1, code:'A',short:'Conceptualización',    name:'Conceptualización y definición de requisitos del producto',dur:10,preds:[]},
+  {id:2, code:'B',short:'Diseño industrial',    name:'Diseño industrial y acústico del producto',               dur:20,preds:[1]},
+  {id:3, code:'C',short:'Diseño electrónico',   name:'Diseño electrónico y de firmware',                        dur:25,preds:[1]},
+  {id:4, code:'D',short:'Estudio localización', name:'Estudio de localización de la planta',                    dur:15,preds:[1]},
+  {id:5, code:'E',short:'Diseño de la planta',  name:'Diseño de la planta (layout + ingeniería civil)',         dur:20,preds:[4]},
+  {id:6, code:'F',short:'Construcción edificio',name:'Construcción del edificio e instalación de servicios',    dur:60,preds:[5]},
+  {id:7, code:'G',short:'Adq. componentes',     name:'Adquisición de componentes para prototipo',               dur:10,preds:[2,3]},
+  {id:8, code:'H',short:'Fabricación moldes',   name:'Fabricación de moldes de inyección',                      dur:30,preds:[2,6]},
+  {id:9, code:'I',short:'Montaje línea',        name:'Montaje de la línea de ensamblaje',                       dur:15,preds:[6,8]},
+  {id:10,code:'J',short:'Calibración línea',    name:'Calibración de la línea de ensamblaje',                   dur:10,preds:[9]},
+  {id:11,code:'K',short:'Certificaciones',      name:'Certificaciones de la planta',                            dur:20,preds:[10]},
+  {id:12,code:'L',short:'Prueba piloto',        name:'Prueba piloto de la línea de producción',                 dur:10,preds:[10,11]},
 ];
 const ES={},EF={};
 RAW.forEach(t=>{ES[t.id]=t.preds.length?Math.max(...t.preds.map(p=>EF[p])):0;EF[t.id]=ES[t.id]+t.dur;});
-const PWD=Math.max(...RAW.map(t=>EF[t.id])); // 115
+const PWD=Math.max(...RAW.map(t=>EF[t.id]));
 const LS={},LF={},TF={};
 [...RAW].reverse().forEach(t=>{
   const s=RAW.filter(x=>x.preds.includes(t.id));
@@ -52,87 +50,57 @@ const LS={},LF={},TF={};
 });
 const TASKS=RAW.map(t=>({...t,es:ES[t.id],ef:EF[t.id],ls:LS[t.id],lf:LF[t.id],tf:TF[t.id],
   critical:TF[t.id]===0,sd:addWD(P_START,ES[t.id]),ed:addWD(P_START,EF[t.id])}));
-
-// ── Posiciones red (A–J, layout más compacto) ─────────────────────────────────
 const NW=118,NH=70;
 const NP={
-  1:{x:50, y:235},   // A – centro izquierda
-  2:{x:240,y:110},   // B – arriba
-  3:{x:240,y:360},   // C – abajo
-  4:{x:440,y:235},   // D – centro (B+C convergen)
-  5:{x:620,y:235},   // E – centro
-  6:{x:800,y:235},   // F – centro
-  7:{x:990,y:60},    // G – arriba derecha (fin no crítico)
-  8:{x:990,y:235},   // H – centro derecha (crítico)
-  9:{x:990,y:410},   // I – abajo derecha (fin no crítico)
-  10:{x:1180,y:235}, // J – extremo derecho (fin crítico)
+  1:{x:30,y:220},2:{x:210,y:80},3:{x:210,y:360},4:{x:210,y:220},
+  5:{x:410,y:220},6:{x:620,y:220},7:{x:410,y:430},8:{x:880,y:350},
+  9:{x:1080,y:220},10:{x:1260,y:220},11:{x:1440,y:220},12:{x:1620,y:220},
 };
-
-// ── Empleados ─────────────────────────────────────────────────────────────────
 const EMPLOYEES=[
-  ['EGP', 'Empleado - Gestión',          'Gerente de Proyecto',            '$9.500'],
-  ['EDIA','Empleado - Diseño',           'Diseñador Industrial/Acústico',  '$8.000'],
-  ['EIE', 'Empleado - Electrónica',      'Ingeniero Electrónico',          '$8.500'],
-  ['EIF', 'Empleado - Firmware',         'Ingeniero de Firmware',          '$8.200'],
-  ['ERC', 'Empleado - Compras',          'Responsable de Compras',         '$6.500'],
-  ['EOP', 'Empleado - Producción',       'Operario de Producción',         '$3.800'],
-  ['EIC', 'Empleado - Calidad',          'Ingeniero de Calidad',           '$7.000'],
-  ['ERM', 'Empleado - Marketing',        'Responsable de Marketing',       '$6.800'],
-  ['EICE','Empleado - Certificaciones',  'Ingeniero de Certificaciones',   '$8.000'],
+  ['EGP', 'Empleado - Gestión',         'Gerente de Proyecto',          '$9.500'],
+  ['EII', 'Empleado - Ing. Industrial', 'Ingeniero Industrial',          '$8.500'],
+  ['EIC', 'Empleado - Ing. Civil',      'Ingeniero Civil',               '$8.000'],
+  ['EDIA','Empleado - Diseño',          'Diseñador Industrial/Acústico', '$8.000'],
+  ['EIE', 'Empleado - Electrónica',     'Ingeniero Electrónico',         '$8.500'],
+  ['EIF', 'Empleado - Firmware',        'Ingeniero de Firmware',         '$8.200'],
+  ['ERC', 'Empleado - Compras',         'Responsable de Compras',        '$6.500'],
+  ['EOP', 'Empleado - Producción',      'Operario de Producción',        '$3.800'],
+  ['EICE','Empleado - Certificaciones', 'Ingeniero de Certificaciones',  '$8.000'],
 ];
-
-// ── Asignación por tarea ──────────────────────────────────────────────────────
 const ASSIGN=[
-  {code:'A',emp:['EGP','ERM']},
-  {code:'B',emp:['EDIA']},
-  {code:'C',emp:['EIE','EIF']},
-  {code:'D',emp:['ERC']},
-  {code:'E',emp:['EOP']},
-  {code:'F',emp:['EIC']},
-  {code:'G',emp:['EICE']},
-  {code:'H',emp:['EOP']},
-  {code:'I',emp:['ERC']},
-  {code:'J',emp:['EOP']},
+  {code:'A',emp:['EGP','EII']},{code:'B',emp:['EDIA']},{code:'C',emp:['EIE','EIF']},
+  {code:'D',emp:['EGP','EIC']},{code:'E',emp:['EIC','EII']},{code:'F',emp:['EIC']},
+  {code:'G',emp:['ERC']},{code:'H',emp:['EOP']},{code:'I',emp:['EOP','EII']},
+  {code:'J',emp:['EOP','EII']},{code:'K',emp:['EICE']},{code:'L',emp:['EOP','EII']},
 ];
-
-// ── Tarifas (ARS/hr) ──────────────────────────────────────────────────────────
-const EMP_RATE={EGP:9500,EDIA:8000,EIE:8500,EIF:8200,ERC:6500,EOP:3800,EIC:7000,ERM:6800,EICE:8000};
-
-// ── Tabla genérica ────────────────────────────────────────────────────────────
+const EMP_RATE={EGP:9500,EII:8500,EIC:8000,EDIA:8000,EIE:8500,EIF:8200,ERC:6500,EOP:3800,EICE:8000};
 function Tbl({heads,rows}){
   return html`<table style=${{width:'100%',borderCollapse:'collapse',fontSize:13}}>
-    <thead><tr>${heads.map((h,i)=>html`<th key=${i} style=${{background:'#1e293b',color:'#e2e8f0',
-      padding:'9px 12px',textAlign:'left',fontWeight:500,fontSize:12,whiteSpace:'nowrap'}}>${h}</th>`)}</tr></thead>
+    <thead><tr>${heads.map((h,i)=>html`<th key=${i} style=${{background:'#1e293b',color:'#e2e8f0',padding:'9px 12px',textAlign:'left',fontWeight:500,fontSize:12,whiteSpace:'nowrap'}}>${h}</th>`)}</tr></thead>
     <tbody>${rows.map((row,i)=>html`<tr key=${i} style=${{background:i%2===0?'#f8fafc':'white'}}>
-      ${row.map((cell,j)=>html`<td key=${j} style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',
-        color:j===0?'#1d4ed8':'#374151',fontFamily:j===0?'monospace':'inherit',fontWeight:j===0?700:400}}>${cell}</td>`)}
+      ${row.map((cell,j)=>html`<td key=${j} style=${{padding:'7px 12px',borderBottom:'1px solid #e2e8f0',color:j===0?'#1d4ed8':'#374151',fontFamily:j===0?'monospace':'inherit',fontWeight:j===0?700:400}}>${cell}</td>`)}
     </tr>`)}</tbody>
   </table>`;
 }
-
-// ── Histograma de pagos ───────────────────────────────────────────────────────
 function PaymentChart(){
   const data=[...TASKS].sort((a,b)=>a.es-b.es).map(t=>{
     const a=ASSIGN.find(x=>x.code===t.code);
     const rate=a.emp.reduce((s,e)=>s+(EMP_RATE[e]||0),0);
-    return {...t,cost:rate*t.dur*8,rate};
+    return {...t,cost:rate*t.dur*8};
   });
   const maxCost=Math.max(...data.map(d=>d.cost));
   const total=data.reduce((s,d)=>s+d.cost,0);
   const maxY=Math.ceil(maxCost/500000)*500000;
-  const ticks=[];
-  for(let v=0;v<=maxY;v+=500000)ticks.push(v);
-  const BW=52,GAP=8,CH=200,ML=82,MT=22,MB=58,MR=55;
-  const W=data.length*(BW+GAP)+ML+MR, H=CH+MT+MB;
+  const ticks=[];for(let v=0;v<=maxY;v+=500000)ticks.push(v);
+  const BW=50,GAP=7,CH=200,ML=82,MT=22,MB=60,MR=55;
+  const W=data.length*(BW+GAP)+ML+MR,H=CH+MT+MB;
   let cumul=0;
-  const cPts=data.map((d,i)=>{cumul+=d.cost;
-    return{x:ML+i*(BW+GAP)+BW/2,y:MT+CH-(cumul/total)*CH,pct:Math.round(cumul/total*100)};});
+  const cPts=data.map((d,i)=>{cumul+=d.cost;return{x:ML+i*(BW+GAP)+BW/2,y:MT+CH-(cumul/total)*CH};});
   const cPath=cPts.map((p,i)=>`${i===0?'M':'L'}${p.x},${p.y}`).join(' ');
-
   return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14,marginTop:12}}>
     <div style=${{display:'flex',alignItems:'baseline',gap:12,marginBottom:10,flexWrap:'wrap'}}>
       <span style=${{fontSize:14,fontWeight:700,color:'#1e293b'}}>💰 Plan de pagos — Empleados</span>
-      <span style=${{fontSize:12,color:'#6b7280'}}>Pago distribuido durante la tarea · 8 hr/día hábil · ordenado por inicio</span>
+      <span style=${{fontSize:12,color:'#6b7280'}}>Distribuido durante la tarea · 8 hr/día · ordenado por inicio</span>
       <span style=${{fontSize:13,fontWeight:700,color:'#1d4ed8',marginLeft:'auto'}}>Total: ${fM(total)} ARS</span>
     </div>
     <div style=${{overflowX:'auto',border:'1px solid #e5e7eb',borderRadius:6}}>
@@ -141,18 +109,15 @@ function PaymentChart(){
           <line x1=${ML} y1=${y} x2=${W-MR} y2=${y} stroke=${v===0?'#d1d5db':'#e5e7eb'} strokeWidth="1" strokeDasharray=${v===0?'none':'3,3'}/>
           <text x=${ML-5} y=${y+3.5} fontSize="9" fill="#94a3b8" textAnchor="end">${fM(v)}</text>
         </g>`;})}
-        ${[0,25,50,75,100].map((p,i)=>{const y=MT+CH-(p/100)*CH;return html`<g key=${i}>
-          <text x=${W-MR+6} y=${y+3.5} fontSize="9" fill="#f59e0b" textAnchor="start">${p}%</text>
-        </g>`;})}
+        ${[0,25,50,75,100].map((p,i)=>html`<text key=${i} x=${W-MR+6} y=${MT+CH-(p/100)*CH+3.5} fontSize="9" fill="#f59e0b" textAnchor="start">${p}%</text>`)}
         ${data.map((d,i)=>{
           const x=ML+i*(BW+GAP),bh=Math.max((d.cost/maxY)*CH,2),y=MT+CH-bh;
           return html`<g key=${d.code}>
-            <title>${d.code}: ${fM(d.cost)} — ${ASSIGN.find(a=>a.code===d.code).emp.join(', ')} — ${d.dur}d</title>
             <rect x=${x} y=${y} width=${BW} height=${bh} rx="3" fill=${d.critical?'#ef4444':'#3b82f6'} fillOpacity="0.85"/>
-            <text x=${x+BW/2} y=${y-5} fontSize="8.5" fill="#374151" textAnchor="middle" fontWeight="500">${fM(d.cost)}</text>
+            <text x=${x+BW/2} y=${y-5} fontSize="8.5" fill="#374151" textAnchor="middle">${fM(d.cost)}</text>
             <text x=${x+BW/2} y=${MT+CH+16} fontSize="12" fontWeight="bold" fill=${d.critical?'#b91c1c':'#1d4ed8'} textAnchor="middle">${d.code}</text>
             <text x=${x+BW/2} y=${MT+CH+30} fontSize="8" fill="#94a3b8" textAnchor="middle">${d.dur}d</text>
-            <text x=${x+BW/2} y=${MT+CH+43} fontSize="8" fill="#64748b" textAnchor="middle">${ASSIGN.find(a=>a.code===d.code).emp.join('+')}</text>
+            <text x=${x+BW/2} y=${MT+CH+44} fontSize="8" fill="#64748b" textAnchor="middle">${ASSIGN.find(a=>a.code===d.code).emp.join('+')}</text>
           </g>`;
         })}
         <path d=${cPath} fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
@@ -167,41 +132,29 @@ function PaymentChart(){
         <text x=${W-MR+28} y=${MT+CH/2} fontSize="10" fill="#f59e0b" textAnchor="middle" transform=${`rotate(90,${W-MR+28},${MT+CH/2})`}>Acumulado %</text>
       </svg>
     </div>
-    <div style=${{display:'flex',gap:18,marginTop:8,fontSize:11,flexWrap:'wrap',alignItems:'center'}}>
-      <span style=${{display:'flex',alignItems:'center',gap:4}}>
-        <span style=${{width:14,height:10,background:'#ef4444',borderRadius:2,display:'inline-block',opacity:.85}}></span>Tarea crítica
-      </span>
-      <span style=${{display:'flex',alignItems:'center',gap:4}}>
-        <span style=${{width:14,height:10,background:'#3b82f6',borderRadius:2,display:'inline-block',opacity:.85}}></span>No crítica
-      </span>
-      <span style=${{display:'flex',alignItems:'center',gap:4}}>
-        <span style=${{display:'inline-block',width:24,height:2.5,background:'#f59e0b',borderRadius:1}}></span>Egreso acumulado (eje derecho)
-      </span>
+    <div style=${{display:'flex',gap:18,marginTop:8,fontSize:11,flexWrap:'wrap'}}>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}><span style=${{width:14,height:10,background:'#ef4444',borderRadius:2,display:'inline-block'}}></span>Crítica</span>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}><span style=${{width:14,height:10,background:'#3b82f6',borderRadius:2,display:'inline-block'}}></span>No crítica</span>
+      <span style=${{display:'flex',alignItems:'center',gap:4}}><span style=${{display:'inline-block',width:24,height:2.5,background:'#f59e0b',borderRadius:1}}></span>Egreso acumulado</span>
     </div>
   </div>`;
 }
-
-// ── Gantt ─────────────────────────────────────────────────────────────────────
 function Gantt(){
-  const [zoom,setZoom]=useState(8);
+  const [zoom,setZoom]=useState(5);
   const [showDeps,setShowDeps]=useState(true);
   const [sel,setSel]=useState(null);
-  const DW=zoom,RH=32,LW=250,HH=60;
+  const DW=zoom,RH=32,LW=255,HH=60;
   const TW=LW+PWD*DW+10,TH=HH+TASKS.length*RH+4;
-  const marks=[];
-  for(let d=0;d<=PWD;d+=5)marks.push({d,date:addWD(P_START,d)});
+  const marks=[];for(let d=0;d<=PWD;d+=5)marks.push({d,date:addWD(P_START,d)});
   const toggle=t=>setSel(prev=>prev?.id===t.id?null:t);
-  const legend=[['#ef4444','','Crítica (HT=0)'],['#3b82f6','','No crítica'],['#bfdbfe','1px dashed #93c5fd','Holgura']];
-
+  const legend=[['#ef4444','','Crítica'],['#3b82f6','','No crítica'],['#bfdbfe','1px dashed #93c5fd','Holgura']];
   return html`<div>
     <div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
       <div style=${{display:'flex',alignItems:'center',gap:12,marginBottom:10,flexWrap:'wrap'}}>
         <div style=${{display:'flex',alignItems:'center',gap:6}}>
-          <button onClick=${()=>setZoom(z=>Math.max(2,z-1))}
-            style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>−</button>
+          <button onClick=${()=>setZoom(z=>Math.max(2,z-1))} style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>−</button>
           <span style=${{fontSize:13,color:'#6b7280',padding:'0 8px',minWidth:60,textAlign:'center'}}>Zoom ${zoom}×</span>
-          <button onClick=${()=>setZoom(z=>Math.min(20,z+1))}
-            style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>+</button>
+          <button onClick=${()=>setZoom(z=>Math.min(20,z+1))} style=${{width:32,height:32,border:'1px solid #d1d5db',borderRadius:6,cursor:'pointer',background:'#f9fafb',fontSize:20,lineHeight:1}}>+</button>
         </div>
         <label style=${{display:'flex',alignItems:'center',gap:5,fontSize:13,cursor:'pointer',color:'#374151'}}>
           <input type="checkbox" checked=${showDeps} onChange=${e=>setShowDeps(e.target.checked)}/> Dependencias
@@ -212,8 +165,7 @@ function Gantt(){
           </span>`)}
         </div>
       </div>
-      ${sel&&html`<div style=${{background:'#f0f9ff',border:'1px solid #bae6fd',borderRadius:8,padding:'10px 14px',
-        marginBottom:10,fontSize:12,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
+      ${sel&&html`<div style=${{background:'#f0f9ff',border:'1px solid #bae6fd',borderRadius:8,padding:'10px 14px',marginBottom:10,fontSize:12,display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
         <div>
           <div style=${{fontWeight:700,color:sel.critical?'#dc2626':'#1d4ed8',marginBottom:5,fontSize:13}}>${sel.code} — ${sel.name}</div>
           <div style=${{display:'flex',gap:14,flexWrap:'wrap',color:'#374151'}}>
@@ -226,7 +178,7 @@ function Gantt(){
         </div>
         <button onClick=${()=>setSel(null)} style=${{border:'none',background:'none',cursor:'pointer',fontSize:22,color:'#94a3b8',lineHeight:1}}>×</button>
       </div>`}
-      <div style=${{overflowX:'auto',overflowY:'auto',maxHeight:380,border:'1px solid #e5e7eb',borderRadius:6}}>
+      <div style=${{overflowX:'auto',overflowY:'auto',maxHeight:420,border:'1px solid #e5e7eb',borderRadius:6}}>
         <svg width=${TW} height=${TH}>
           <defs>
             <marker id="ga" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"></path></marker>
@@ -250,10 +202,8 @@ function Gantt(){
               ${isSel&&html`<rect x="0" y=${y} width=${TW} height=${RH} fill="#e0f2fe" fillOpacity="0.5"/>`}
               <text x="4" y=${y+RH/2+4} fontSize="11" fontWeight="bold" fill=${t.critical?'#b91c1c':'#1d4ed8'}>${t.code}</text>
               <text x="25" y=${y+RH/2+4} fontSize="10.5" fill="#374151">${t.short}</text>
-              ${t.tf>0&&tw>2&&html`<rect x=${tx} y=${y+7} width=${tw} height=${RH-14} rx="2"
-                fill="#bfdbfe" fillOpacity="0.65" stroke="#93c5fd" strokeWidth="1" strokeDasharray="4,2"/>`}
-              <rect x=${bx} y=${y+7} width=${bw} height=${RH-14} rx="2"
-                fill=${t.critical?'#ef4444':'#3b82f6'} stroke=${isSel?'#0284c7':'none'} strokeWidth=${isSel?2:0}/>
+              ${t.tf>0&&tw>2&&html`<rect x=${tx} y=${y+7} width=${tw} height=${RH-14} rx="2" fill="#bfdbfe" fillOpacity="0.65" stroke="#93c5fd" strokeWidth="1" strokeDasharray="4,2"/>`}
+              <rect x=${bx} y=${y+7} width=${bw} height=${RH-14} rx="2" fill=${t.critical?'#ef4444':'#3b82f6'} stroke=${isSel?'#0284c7':'none'} strokeWidth=${isSel?2:0}/>
               ${bw>16&&html`<text x=${bx+bw/2} y=${y+RH/2+4} fontSize="10" fill="white" textAnchor="middle" fontWeight="bold">${t.code}</text>`}
               ${t.tf>0&&tw>34&&html`<text x=${tx+tw/2} y=${y+RH/2+4} fontSize="9" fill="#1d4ed8" textAnchor="middle">HT=${t.tf}d</text>`}
             </g>`;
@@ -261,7 +211,7 @@ function Gantt(){
           <rect x="0" y="0" width=${TW} height=${HH} fill="#0f172a"/>
           <text x="8" y="26" fontSize="13" fontWeight="bold" fill="white">Tarea</text>
           <text x=${LW+12} y="26" fontSize="12" fontWeight="bold" fill="white">Cronograma — días hábiles (lun–vie) · clic en barra para detalles</text>
-          <text x="8" y="46" fontSize="9.5" fill="#94a3b8">${fD(P_START)} → ${fD(addWD(P_START,PWD))} · ${PWD} días hábiles · 23 semanas</text>
+          <text x="8" y="46" fontSize="9.5" fill="#94a3b8">${fD(P_START)} → ${fD(addWD(P_START,PWD))} · ${PWD} días hábiles · 38 semanas</text>
           <line x1=${LW} y1="0" x2=${LW} y2=${TH} stroke="#334155" strokeWidth="1"/>
         </svg>
       </div>
@@ -269,24 +219,20 @@ function Gantt(){
     <${PaymentChart}/>
   </div>`;
 }
-
-// ── Red CPM ───────────────────────────────────────────────────────────────────
 function Network(){
-  const SVG_W=1350,SVG_H=520;
+  const SVG_W=1800,SVG_H=550;
   const arrows=TASKS.flatMap(t=>t.preds.map(pid=>{
     const s=NP[pid],d=NP[t.id],x1=s.x+NW,y1=s.y+NH/2,x2=d.x,y2=d.y+NH/2,cx=(x1+x2)/2;
     const isCrit=TASKS.find(x=>x.id===pid)?.critical&&t.critical;
-    const path=`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`;
+    const path=(pid===2&&t.id===8)
+      ?`M ${x1} ${y1} C ${x1+120} ${y1} ${x2-120} ${y2} ${x2} ${y2}`
+      :`M ${x1} ${y1} C ${cx} ${y1} ${cx} ${y2} ${x2} ${y2}`;
     return {key:`${pid}-${t.id}`,path,isCrit};
   }));
   return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
     <div style=${{display:'flex',gap:20,fontSize:12,marginBottom:10,flexWrap:'wrap',alignItems:'center'}}>
-      <span style=${{display:'flex',alignItems:'center',gap:5}}>
-        <span style=${{display:'inline-block',width:18,height:13,border:'2px solid #dc2626',background:'#fff1f2',borderRadius:3}}></span>Crítica (HT=0 ★)
-      </span>
-      <span style=${{display:'flex',alignItems:'center',gap:5}}>
-        <span style=${{display:'inline-block',width:18,height:13,border:'2px solid #2563eb',background:'#eff6ff',borderRadius:3}}></span>No crítica
-      </span>
+      <span style=${{display:'flex',alignItems:'center',gap:5}}><span style=${{display:'inline-block',width:18,height:13,border:'2px solid #dc2626',background:'#fff1f2',borderRadius:3}}></span>Crítica (HT=0 ★)</span>
+      <span style=${{display:'flex',alignItems:'center',gap:5}}><span style=${{display:'inline-block',width:18,height:13,border:'2px solid #2563eb',background:'#eff6ff',borderRadius:3}}></span>No crítica</span>
       <span style=${{color:'#6b7280',fontSize:11}}>Nodo: ES | Cód | EF / HT / LS | LF (días hábiles)</span>
     </div>
     <div style=${{overflowX:'auto',border:'1px solid #e5e7eb',borderRadius:6}}>
@@ -295,8 +241,7 @@ function Network(){
           <marker id="na" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="#9ca3af"></polygon></marker>
           <marker id="nac" markerWidth="7" markerHeight="7" refX="7" refY="3.5" orient="auto"><polygon points="0,0 7,3.5 0,7" fill="#ef4444"></polygon></marker>
         </defs>
-        ${arrows.map(({key,path,isCrit})=>html`<path key=${key} d=${path} fill="none"
-          stroke=${isCrit?'#ef4444':'#9ca3af'} strokeWidth=${isCrit?2:1.5} markerEnd=${isCrit?'url(#nac)':'url(#na)'}/>`)}
+        ${arrows.map(({key,path,isCrit})=>html`<path key=${key} d=${path} fill="none" stroke=${isCrit?'#ef4444':'#9ca3af'} strokeWidth=${isCrit?2:1.5} markerEnd=${isCrit?'url(#nac)':'url(#na)'}/>`)}
         ${TASKS.map(t=>{
           const p=NP[t.id],c=t.critical,H1=NH*.37,H2=NH*.63,col=c?'#dc2626':'#2563eb';
           return html`<g key=${t.id} transform=${`translate(${p.x},${p.y})`}>
@@ -318,16 +263,12 @@ function Network(){
     </div>
   </div>`;
 }
-
-// ── Recursos ──────────────────────────────────────────────────────────────────
 function Resources(){
   return html`<div style=${{background:'white',borderRadius:8,boxShadow:'0 1px 4px rgba(0,0,0,.1)',padding:14}}>
     <div style=${{marginBottom:12,fontSize:14,fontWeight:700,color:'#1e293b'}}>👤 Empleados del proyecto</div>
     <${Tbl} heads=${['Código','Empleado','Rol asignado','Costo/hr (ARS)']} rows=${EMPLOYEES}/>
   </div>`;
 }
-
-// ── App ───────────────────────────────────────────────────────────────────────
 function App(){
   const [tab,setTab]=useState('gantt');
   const pEnd=addWD(P_START,PWD);
@@ -338,10 +279,9 @@ function App(){
     <div style=${{background:'#0f172a',color:'white',padding:'14px 18px'}}>
       <h1 style=${{margin:0,fontSize:16,fontWeight:600}}>🏭 Habilitación y certificación de la planta — Parlantes Bluetooth Portátiles</h1>
       <div style=${{display:'flex',gap:18,marginTop:7,fontSize:12,color:'#94a3b8',flexWrap:'wrap'}}>
-        <span>📅 Inicio: ${fD(P_START)}</span>
-        <span>🏁 Fin: ${fD(pEnd)}</span>
-        <span>⏱ ${PWD} días hábiles · 23 semanas</span>
-        <span style=${{color:'#fca5a5',fontWeight:600}}>🔴 Ruta crítica: A→C→D→E→F→H→J</span>
+        <span>📅 Inicio: ${fD(P_START)}</span><span>🏁 Fin: ${fD(pEnd)}</span>
+        <span>⏱ ${PWD} días hábiles · 38 semanas</span>
+        <span style=${{color:'#fca5a5',fontWeight:600}}>🔴 Ruta crítica: A→D→E→F→H→I→J→K→L</span>
       </div>
     </div>
     <div style=${{display:'flex',background:'white',borderBottom:'2px solid #e2e8f0',padding:'0 14px'}}>
@@ -356,7 +296,6 @@ function App(){
     </div>
   </div>`;
 }
-
 ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
 </script>
 </body>
